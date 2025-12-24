@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: school
+  datasource:
+    url: jdbc:mysql://localhost:3306/school_db2?createDatabaseIfNotExist=true
+    username: root
+    password: admin
+  jpa:
+    show-sql: true
+
+server:
+  port: 8080
