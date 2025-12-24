@@ -69,12 +69,12 @@ All communication is currently **synchronous HTTP-based**, without retries, circ
 ### Spring Boot Service
 
 ```bash
-cd java-service
+cd school
 ./mvnw spring-boot:run
 ```
 ### Rust Axum Service
 ```bash
-cd rust-service
+cd student
 cargo run
 ```
 
@@ -86,7 +86,7 @@ Currently, service endpoints are configured using static URLs (e.g. localhost wi
 
 Example:
 
-- Java service calls Rust service at http://localhost:8081
+- Java service calls Rust service at http://localhost:8090
 - Rust service calls Java service at http://localhost:8080
 
 This will evolve in future iterations.
