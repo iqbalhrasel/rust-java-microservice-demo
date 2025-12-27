@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use axum::{
     Router,
     handler::HandlerWithoutStateExt,
@@ -10,7 +12,10 @@ use sqlx::mysql::MySqlPoolOptions;
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 
-use crate::model::StudentService;
+use crate::{
+    model::StudentService,
+    web::kafka_producer::{AppState, KafkaProducer},
+};
 
 mod errors;
 mod model;
@@ -35,8 +40,14 @@ async fn main() {
 
     let student_service = StudentService::new(pool);
 
+    let producer = KafkaProducer::new("localhost:9092");
+    let state = AppState {
+        kafka: Arc::new(producer),
+    };
+
     let all_routes = Router::new()
         .merge(web::student_routes::student_routes(student_service))
+        .merge(web::kafka_message::get_kafka_route(state))
         .layer(middleware::map_response(main_response_mapper))
         .fallback_service(fallback_route());
 

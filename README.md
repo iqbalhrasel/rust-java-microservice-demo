@@ -7,15 +7,36 @@ This project is a **polyglot microservice example** built using:
 
 The goal is to explore **cross-language microservice communication** while keeping the architecture simple at an early stage.
 
+---
+
+## Services
+
+- school: Java (Spring boot) - `REST Api` + `Kafka consumer`
+- student: Rust (Axum) - `REST Api` + `Kafka consumer`
+- spring-kafka-con: Java (Spring boot) - `Kafka consumer`
+- axum_kafka_con: Rust (Axum) - `Kafka consumer`
+
+---
+
+## Service Flow
+
+- `student` service is a `Kafka producer` which is consumed by `spring-kafka-con` service `Kafka consumer`
+
+
+The architecture is intentionally minimal to keep the focus on **interoperability between Java and Rust services**.
+
+---
+
 At this point, the project focuses only on **basic internal service-to-service communication**. No API gateway, service discovery, or advanced infrastructure is implemented yet.
 
 ---
 
 ## Project Status
 
-**Early / Primary Level**
+**Stage 2 / Primary Level**
 
 - Microservices communicate directly via HTTP
+- Kafka support added
 - No gateway or discovery mechanism
 - No authentication or authorization
 - No container orchestration
@@ -27,16 +48,20 @@ The architecture is intentionally minimal to keep the focus on **interoperabilit
 
 ## Tech Stack
 
-### Java Service
+### `school` Service
 - Java
 - Spring Boot
 - Spring `RestClient` (for internal HTTP calls)
 
-### Rust Service
+### `student` Service
 - Rust
 - Axum (web framework)
 - Reqwest (HTTP client for internal communication)
 - Tokio (async runtime)
+
+### Kafka + Zookeeper
+- Kafka: confluentinc/cp-kafka:7.4.0
+- Zookeeper: confluentinc/cp-zookeeper:7.4.0
 
 ---
 
@@ -54,8 +79,11 @@ All communication is currently **synchronous HTTP-based**, without retries, circ
 ## Architecture (Current)
 
 +------------------+ HTTP +------------------+
+
 | Spring Boot | <--------------> | Rust Axum |
+
 | Microservice |                 | Microservice |
+
 +------------------+ +------------------+
 
 
@@ -82,12 +110,12 @@ Make sure both services are running so they can communicate with each other.
 
 ## Configuration
 
-Currently, service endpoints are configured using static URLs (e.g. localhost with fixed ports).
+Currently, service endpoints are configured using static URLs.
 
 Example:
 
-- Java service calls Rust service at http://localhost:8090
-- Rust service calls Java service at http://localhost:8080
+- `school` service calls `student` service at http://localhost:8090
+- `student` service calls `school` service at http://localhost:8080
 
 This will evolve in future iterations.
 
