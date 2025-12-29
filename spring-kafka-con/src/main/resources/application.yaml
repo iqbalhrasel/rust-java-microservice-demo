@@ -4,13 +4,12 @@ spring:
   kafka:
     consumer:
       bootstrap-servers: localhost:9092
-      group-id: kafkaSpringGroup
+      group-id: kafka1SpringGroup, kafka2SpringGroup
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: '*'
-        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
-        spring.json.value.default.type: com.pxc.spring_kafka_con.kafka.DataDemoDto
+        spring.json.type.mapping: dataDemoDto:com.pxc.spring_kafka_con.kafka.DataDemoDto, elementDemoDto:com.pxc.spring_kafka_con.kafka.ElementDemoDto
 server:
   port: 7080

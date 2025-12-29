@@ -2,6 +2,7 @@ use std::{sync::Arc, time::Duration};
 
 use rdkafka::{
     ClientConfig,
+    message::{Header, OwnedHeaders},
     producer::{FutureProducer, FutureRecord},
 };
 
@@ -27,9 +28,17 @@ impl KafkaProducer {
     }
 
     pub async fn send(&self, topic: &str, key: &str, payload: &str) -> Result<(), String> {
+        let headers = OwnedHeaders::new().insert(Header {
+            key: "__TypeId__",
+            value: Some(key),
+        });
+
         self.producer
             .send(
-                FutureRecord::to(topic).key(key).payload(payload),
+                FutureRecord::to(topic)
+                    .key(key)
+                    .payload(payload)
+                    .headers(headers),
                 Duration::from_secs(0),
             )
             .await

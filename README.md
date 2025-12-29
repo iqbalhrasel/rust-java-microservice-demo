@@ -20,10 +20,10 @@ The goal is to explore **cross-language microservice communication** while keepi
 
 ## Service Flow
 
+- `school` service exposes REST Apis.
+- `student` service exposes REST Apis.
+- `school` service and `student` service talkes to each other via RestClient (Java) and Reqwest (Rust) library.
 - `student` service is a `Kafka producer` which is consumed by `spring-kafka-con` service `Kafka consumer`
-
-
-The architecture is intentionally minimal to keep the focus on **interoperability between Java and Rust services**.
 
 ---
 
@@ -63,6 +63,15 @@ The architecture is intentionally minimal to keep the focus on **interoperabilit
 - Kafka: confluentinc/cp-kafka:7.4.0
 - Zookeeper: confluentinc/cp-zookeeper:7.4.0
 
+### `spring-kafka-con` Service
+- Java
+- Spring Boot
+- Spring Kafka
+
+### `axum_kafka_con` Service
+- Rust
+- Tokio (async runtime)
+- rdkafka
 ---
 
 ## Communication
@@ -76,21 +85,6 @@ All communication is currently **synchronous HTTP-based**, without retries, circ
 
 ---
 
-## Architecture (Current)
-
-+------------------+ HTTP +------------------+
-
-| Spring Boot | <--------------> | Rust Axum |
-
-| Microservice |                 | Microservice |
-
-+------------------+ +------------------+
-
-
-- Services are started manually
-- Service URLs are configured statically
-- No load balancing or discovery
-
 
 ## Running the Services
 
@@ -100,9 +94,19 @@ All communication is currently **synchronous HTTP-based**, without retries, circ
 cd school
 ./mvnw spring-boot:run
 ```
+
+```bash
+cd spring-kafka-con
+./mvnw spring-boot:run
+```
 ### Rust Axum Service
 ```bash
 cd student
+cargo run
+```
+
+```bash
+cd axum_kafka_con
 cargo run
 ```
 
@@ -138,4 +142,4 @@ This repository is meant for:
 - Comparing developer experience between Spring Boot and Axum
 - Experimenting with Java ↔ Rust service interaction
 
-It is not production-ready.
+It is not production-ready yet.
