@@ -11,8 +11,8 @@ The goal is to explore **cross-language microservice communication** while keepi
 
 ## Services
 
-- school: Java (Spring boot) - `REST Api` + `Kafka consumer`
-- student: Rust (Axum) - `REST Api` + `Kafka consumer`
+- school: Java (Spring boot) - `REST Api` + `Kafka Producer`
+- student: Rust (Axum) - `REST Api` + `Kafka Producer`
 - spring-kafka-con: Java (Spring boot) - `Kafka consumer`
 - axum_kafka_con: Rust (Axum) - `Kafka consumer`
 
