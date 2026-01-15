@@ -5,8 +5,12 @@ use consulrs::api::service::requests::RegisterServiceRequest;
 use consulrs::client::{ConsulClient, ConsulClientSettingsBuilder};
 use consulrs::service::{self, deregister};
 use local_ip_address::local_ip;
+use reqwest::Client;
+use serde::Deserialize;
 
-const SERVICE_NAME: &str = "student-service";
+use crate::errors::Error;
+
+const SERVICE_NAME: &str = "student";
 const SERVICE_PORT: u64 = 8090;
 
 pub fn config() -> ConsulClient {
@@ -27,7 +31,7 @@ pub async fn register_service(consul_client: Arc<ConsulClient>) {
 
     service::register(
         consul_client.as_ref(),
-        "student",
+        SERVICE_NAME,
         Some(
             RegisterServiceRequest::builder()
                 .id(format!("{SERVICE_NAME}-{SERVICE_PORT}"))
@@ -61,4 +65,29 @@ pub async fn deregister_service(consul_client: Arc<ConsulClient>) {
     .expect("Failed to deregister service");
 
     println!("Deregistered '{}'", SERVICE_NAME);
+}
+
+#[allow(non_snake_case)]
+#[derive(Deserialize, Debug)]
+struct ConsulService {
+    ServiceAddress: String,
+    ServicePort: u16,
+}
+
+pub async fn get_school_service_address() -> Result<String, Error> {
+    let client = Client::new();
+    let res = client
+        .get("http://127.0.0.1:8500/v1/catalog/service/school")
+        .send()
+        .await
+        .map_err(|_| Error::InternalServerError)?;
+
+    let services: Vec<ConsulService> = res.json().await.map_err(|_| Error::InternalServerError)?;
+
+    if services.is_empty() {
+        return Err(Error::SchoolNotFoundError);
+    }
+
+    let s = &services[0];
+    Ok(format!("http://{}:{}", s.ServiceAddress, s.ServicePort))
 }

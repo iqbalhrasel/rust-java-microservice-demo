@@ -22,6 +22,7 @@ The goal is to explore **cross-language microservice communication** while keepi
 
 - `school` service exposes REST Apis.
 - `student` service exposes REST Apis.
+- `student` and `school` services talks to each other via Consul.
 - `school` service and `student` service talkes to each other via RestClient (Java) and Reqwest (Rust) library.
 - `student` service is a `Kafka producer` which is consumed by `spring-kafka-con` service `Kafka consumer`
 
@@ -33,11 +34,10 @@ At this point, the project focuses only on **basic internal service-to-service c
 
 ## Project Status
 
-**Stage 2 / Primary Level**
+**Stage 3 / Intermediate Level**
 
-- Microservices communicate directly via HTTP
 - Kafka support added
-- No gateway or discovery mechanism
+- Service discovery mechanism added (Consul)
 - No authentication or authorization
 - No container orchestration
 - No centralized configuration
@@ -60,8 +60,13 @@ The architecture is intentionally minimal to keep the focus on **interoperabilit
 - Tokio (async runtime)
 
 ### Kafka + Zookeeper
+- Docker
 - Kafka: confluentinc/cp-kafka:7.4.0
 - Zookeeper: confluentinc/cp-zookeeper:7.4.0
+
+### Consul Service Discovery
+- Docker
+- consul:1.15.4
 
 ### `spring-kafka-con` Service
 - Java
@@ -78,8 +83,8 @@ The architecture is intentionally minimal to keep the focus on **interoperabilit
 
 Internal communication between services is implemented using:
 
-- **Spring Boot → Rust Axum**: Spring `RestClient`
-- **Rust Axum → Spring Boot**: `reqwest`
+- **Spring Boot → Rust Axum**: Consul via `RestTemplate`
+- **Rust Axum → Spring Boot**: Consul via `reqwest`
 
 All communication is currently **synchronous HTTP-based**, without retries, circuit breakers, or timeouts configured.
 
@@ -127,12 +132,10 @@ This will evolve in future iterations.
 The project is expected to evolve with:
 
 - API Gateway (Spring Cloud Gateway / Envoy / Traefik)
-- Service Discovery (Eureka / Consul)
 - Centralized configuration
 - Resilience patterns (timeouts, retries, circuit breakers)
 - Observability (logging, metrics, tracing)
 - Containerization (Docker)
-- Orchestration (Kubernetes)
 
 ## Purpose
 

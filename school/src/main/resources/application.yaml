@@ -21,6 +21,7 @@ spring:
       discovery:
         register: true
         health-check-path: /actuator/health
+#        service-name: school-service
 
 server:
   port: 8080

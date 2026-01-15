@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sqlx::{MySqlPool, prelude::FromRow};
 
-use crate::errors::Error;
+use crate::{consul, errors::Error};
 
 #[derive(Debug, FromRow, Serialize)]
 struct Student {
@@ -143,18 +143,11 @@ impl StudentService {
             Some(s) => s,
         };
 
-        // let client = Client::new().get(format!(
-        //     "http://localhost:8080/schools/{}",
-        //     student.school_id,
-        // ));
-        // let school_dto: SchoolDto = client.send().await.unwrap().json().await.unwrap();
-
-        let res = reqwest::get(format!(
-            "http://localhost:8080/schools/{}",
-            student.school_id,
-        ))
-        .await
-        .map_err(|_| Error::InternalServerError)?;
+        let school_url = consul::get_school_service_address().await?;
+        println!("url: {}", &school_url);
+        let res = reqwest::get(format!("{}/schools/{}", school_url, student.school_id,))
+            .await
+            .map_err(|_| Error::InternalServerError)?;
 
         let school_dto = res
             .json::<SchoolDto>()
