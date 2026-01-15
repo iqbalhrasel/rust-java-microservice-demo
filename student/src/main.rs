@@ -5,11 +5,12 @@ use axum::{
     handler::HandlerWithoutStateExt,
     http::StatusCode,
     middleware,
-    response::Response,
-    routing::{MethodRouter, get_service},
+    response::{IntoResponse, Response},
+    routing::{MethodRouter, get, get_service},
 };
+use consulrs::client::ConsulClient;
 use sqlx::mysql::MySqlPoolOptions;
-use tokio::net::TcpListener;
+use tokio::{net::TcpListener, signal};
 use tower_http::services::ServeDir;
 
 use crate::{
@@ -17,15 +18,21 @@ use crate::{
     web::kafka_producer::{AppState, KafkaProducer},
 };
 
+mod consul;
 mod errors;
 mod model;
 mod web;
 
 #[tokio::main]
 async fn main() {
-    let listener = TcpListener::bind("127.0.0.1:8090")
+    let listener = TcpListener::bind("0.0.0.0:8090")
         .await
         .expect("cant start tcp listener");
+
+    let consul_config = Arc::new(consul::config());
+    let registration_config = consul_config.clone();
+
+    consul::register_service(registration_config.clone()).await;
 
     let pool = MySqlPoolOptions::new()
         .max_connections(10)
@@ -46,6 +53,7 @@ async fn main() {
     };
 
     let all_routes = Router::new()
+        .route("/health", get(health))
         .merge(web::student_routes::student_routes(student_service))
         .merge(web::kafka_message::get_kafka_route(state))
         .layer(middleware::map_response(main_response_mapper))
@@ -54,8 +62,13 @@ async fn main() {
     println!("server is listening on {:?}", listener.local_addr());
 
     axum::serve(listener, all_routes)
+        .with_graceful_shutdown(shutdown_signal(consul_config.clone()))
         .await
         .expect("error serving the student service!!");
+}
+
+async fn health() -> impl IntoResponse {
+    return (StatusCode::OK, "OK").into_response();
 }
 
 fn fallback_route() -> MethodRouter {
@@ -69,4 +82,34 @@ fn fallback_route() -> MethodRouter {
 async fn main_response_mapper(response: Response) -> Response {
     println!("Response status {}", response.status());
     return response;
+}
+
+async fn shutdown_signal(consul_client: Arc<ConsulClient>) {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {
+            println!(" ctrl+c called. Shutting down");
+            consul::deregister_service(consul_client).await;
+        },
+        _ = terminate => {
+            println!("terminated");
+            consul::deregister_service(consul_client).await;
+        },
+    }
 }

@@ -1,6 +1,3 @@
-use std::fmt::format;
-
-use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sqlx::{MySqlPool, prelude::FromRow};
 
