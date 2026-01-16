@@ -42,6 +42,8 @@ pub async fn register_service(consul_client: Arc<ConsulClient>) {
                     AgentServiceCheckBuilder::default()
                         .name("health_check")
                         .interval("5s")
+                        .timeout("5s")
+                        .deregister_critical_service_after("50s")
                         .http(health_url)
                         .status("passing")
                         .build()
